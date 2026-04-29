@@ -1,14 +1,16 @@
 {
-  "name": "after-effects-mcp",
+  "name": "adobe-animate-mcp",
   "version": "1.0.0",
-  "description": "MCP server for Adobe After Effects",
+  "description": "MCP server for Adobe Animate via CEP panel and JSFL bridge",
   "main": "build/index.js",
   "type": "module",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=build/index.js --packages=external && copyfiles -u 1 \"src/scripts/**/*\" build",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=build/index.js --packages=external && copyfiles -u 2 \"src/cep/**/*\" \"build/extension/com.adobe.animatemcp.bridge\" && node scripts/copy-cep-debug.mjs && copyfiles -u 1 \"src/host/**/*\" \"build/extension/com.adobe.animatemcp.bridge\"",
     "start": "node build/index.js",
-    "install-bridge": "node install-bridge.js",
-    "postinstall": "npm run build"
+    "test": "node --import tsx/esm --test tests/protocol.test.ts",
+    "install-extension": "node install-extension.js",
+    "typecheck": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=build/.typecheck-bundle.js --packages=external --log-limit=0",
+    "typecheck:tsc": "node --max-old-space-size=8192 ./node_modules/typescript/lib/tsc.js --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.28.0",
@@ -19,6 +21,7 @@
     "@types/node": "^20.17.30",
     "copyfiles": "^2.4.1",
     "esbuild": "^0.27.4",
+    "tsx": "^4.19.2",
     "typescript": "^5.2.2"
   }
 }

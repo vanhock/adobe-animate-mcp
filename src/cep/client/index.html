@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Adobe Animate MCP Bridge</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -webkit-flex-direction: column;
+        flex-direction: column;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 12px;
+        color: #e6e6e6;
+        background: #1e1e1e;
+      }
+      #boot-error {
+        display: none;
+        flex-shrink: 0;
+        margin: 0;
+        padding: 8px 10px;
+        border-bottom: 1px solid #553333;
+        background: #3d2020;
+        color: #ff9999;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      #boot-error.is-visible {
+        display: block;
+      }
+      #bridge-strip {
+        flex-shrink: 0;
+        padding: 8px 10px;
+        border-bottom: 1px solid #333;
+        background: #252525;
+        font-size: 11px;
+        color: #b0c4d4;
+        line-height: 1.45;
+      }
+      #bridge-strip .cepex-err {
+        margin-top: 6px;
+        color: #ff8a80;
+        font-family: Menlo, Monaco, Consolas, monospace;
+        font-size: 10px;
+      }
+      #task-board {
+        -webkit-box-flex: 1;
+        -webkit-flex: 1;
+        flex: 1;
+        min-height: 0;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -webkit-flex-direction: column;
+        flex-direction: column;
+        padding: 0;
+      }
+      .task-board-hdr {
+        flex-shrink: 0;
+        padding: 6px 10px;
+        font-weight: 600;
+        font-size: 11px;
+        color: #fff;
+        border-bottom: 1px solid #333;
+        background: #222;
+      }
+      .task-col-labels {
+        flex-shrink: 0;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: flex;
+        padding: 4px 10px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #888;
+        border-bottom: 1px solid #2a2a2a;
+      }
+      .task-col-labels span:nth-child(1) {
+        -webkit-box-flex: 1;
+        -webkit-flex: 1;
+        flex: 1;
+        min-width: 0;
+      }
+      .task-col-labels span:nth-child(2) {
+        width: 88px;
+        text-align: center;
+      }
+      .task-col-labels span:nth-child(3) {
+        width: 100px;
+        text-align: right;
+      }
+      #task-list {
+        -webkit-box-flex: 1;
+        -webkit-flex: 1;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      .task-empty {
+        padding: 16px 12px;
+        color: #888;
+        line-height: 1.5;
+      }
+      .task-row {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-wrap: wrap;
+        flex-wrap: wrap;
+        -webkit-box-align: center;
+        -webkit-align-items: center;
+        align-items: center;
+        padding: 8px 10px;
+        border-bottom: 1px solid #2a2a2a;
+        gap: 6px 8px;
+      }
+      .task-row:hover {
+        background: #262626;
+      }
+      .task-cmd {
+        -webkit-box-flex: 1;
+        -webkit-flex: 1;
+        flex: 1;
+        min-width: 0;
+        font-family: Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        word-break: break-all;
+        color: #e0e0e0;
+      }
+      .task-badge {
+        width: 88px;
+        text-align: center;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+      .task-meta {
+        width: 100px;
+        text-align: right;
+        font-size: 10px;
+        color: #888;
+        font-family: Menlo, Monaco, Consolas, monospace;
+      }
+      .task-detail {
+        width: 100%;
+        font-size: 10px;
+        color: #aaa;
+        font-family: Menlo, Monaco, Consolas, monospace;
+        word-break: break-word;
+      }
+      .status-pending .task-badge {
+        background: #4a3d1a;
+        color: #ffc266;
+      }
+      .status-running .task-badge {
+        background: #1a3d4a;
+        color: #7fdbff;
+      }
+      .status-completed .task-badge {
+        background: #1a3d2a;
+        color: #7dff9a;
+      }
+      .status-error .task-badge {
+        background: #4a1a1a;
+        color: #ff9999;
+      }
+    </style>
+  </head>
+  <body>
+    <p id="boot-error"></p>
+    <div id="bridge-strip"></div>
+    <div id="task-board">
+      <div class="task-board-hdr">MCP tasks</div>
+      <div class="task-col-labels">
+        <span>Tool</span>
+        <span>Status</span>
+        <span>Queue</span>
+      </div>
+      <div id="task-list"></div>
+    </div>
+
+    <script src="./js/CSInterface.js"></script>
+    <script src="./js/main.js"></script>
+  </body>
+</html>

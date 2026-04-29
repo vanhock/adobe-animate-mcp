@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "AfterEffectsMCP": {
+    "AdobeAnimateMCP": {
       "command": "node",
-      "args": ["C:\\Users\\Daniel\\Downloads\\after-effects-mcp\\build\\index.js"]
+      "args": ["/ABSOLUTE/PATH/TO/adobe-animate-mcp/build/index.js"]
     }
   }
 }
