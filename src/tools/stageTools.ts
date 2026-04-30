@@ -97,6 +97,37 @@ export function registerStageTools(server: McpServer): void {
   );
 
   server.tool(
+    "animate_list_frame_elements",
+    "List Stage elements on a layer frame with geometry snapshots (elementIndex aligns with animate_set_element_properties).",
+    (
+      DocumentNameOpt.merge(SceneIndexOneBased.partial()).merge(LayerTarget).merge(
+        z.object({
+          frameNumber: z.number().int().min(1),
+          includeMatrix: z.boolean().optional().default(true)
+        })
+      )
+    ).shape,
+    async (args) =>
+      jsonText(await enqueueAndAwaitResult("animate_list_frame_elements", args as Record<string, unknown>))
+  );
+
+  server.tool(
+    "animate_get_element_properties",
+    "Read transform and identity for one timeline element (same targeting as animate_set_element_properties).",
+    (
+      DocumentNameOpt.merge(SceneIndexOneBased.partial()).merge(LayerTarget).merge(
+        z.object({
+          frameNumber: z.number().int().min(1),
+          elementIndex: z.number().int().min(0),
+          includeMatrix: z.boolean().optional().default(true)
+        })
+      )
+    ).shape,
+    async (args) =>
+      jsonText(await enqueueAndAwaitResult("animate_get_element_properties", args as Record<string, unknown>))
+  );
+
+  server.tool(
     "animate_set_filters",
     "Apply Adobe filter objects from Animate`s filter vocabulary (opaque JSON blobs).",
     (

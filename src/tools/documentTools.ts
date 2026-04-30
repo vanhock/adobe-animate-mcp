@@ -99,4 +99,20 @@ export function registerDocumentTools(server: McpServer): void {
     async (args) =>
       jsonText(await enqueueAndAwaitResult("animate_export_document", args as Record<string, unknown>))
   );
+
+  server.tool(
+    "animate_export_frame_snapshot",
+    "Export PNG or SVG snapshot of the Stage at a given scene frame (bridge restores prior timeline and frame after export).",
+    (
+      DocumentNameOpt.merge(SceneIndexOneBased.partial()).merge(
+        z.object({
+          frameNumber: z.number().int().min(1),
+          outputPathPlatform: z.string().min(1).describe("Absolute platform path for the output file"),
+          format: z.enum(["PNG", "SVG"]).optional().default("PNG")
+        })
+      )
+    ).shape,
+    async (args) =>
+      jsonText(await enqueueAndAwaitResult("animate_export_frame_snapshot", args as Record<string, unknown>))
+  );
 }

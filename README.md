@@ -58,6 +58,16 @@ Point your MCP host at the built server (`build/index.js`). This repo ships a te
 - `animate_bridge_status` — heartbeat from `state.json` and hints if the bridge is stale.
 - `animate_get_help` — command list surfaced to the MCP client.
 
+### Geometry reads and frame snapshots
+
+Use structured reads as the source of truth for poses; use snapshots to visually verify renders (especially tween midpoints).
+
+- **`animate_list_frame_elements`** — returns every element on a layer frame with `elementIndex`, `x`, `y`, `width`, `height`, `rotationDeg`, optional `matrix`, `libraryItemName`, etc. Same layer/frame targeting as **`animate_set_element_properties`** (`layerIndex` defaults to **1** when omitted).
+- **`animate_get_element_properties`** — reads one element by **`elementIndex`** on that layer/frame.
+- **`animate_export_frame_snapshot`** — writes **PNG** or **SVG** for the Stage at **`sceneIndex`** + **`frameNumber`**, then restores the document’s previous timeline and frame so authoring context does not drift.
+
+**Limits:** Values match **keyframes** reliably; tween midpoint geometry vs **Properties** may differ by document type — validate in Animate. Snapshots prove visual output but do not replace numeric geometry for automation.
+
 ### Troubleshooting
 
 - **`animate_bridge_status` not healthy — no `state.json`:** reopen **Window → Extensions → Adobe Animate MCP Bridge** and reinstall the extension (`npm run build && npm run install-extension`) after CEP tweaks; enable PlayerDebugMode for unsigned panels (see above).
@@ -93,6 +103,9 @@ Use this when verifying a real installation (not automated in CI):
 2. Open the bridge panel — the top strip should show **heartbeat** timing once `state.json` exists; call any MCP tool and confirm a row appears under **MCP tasks** (status pending → running → completed) and `logs.txt` updates when JSFL runs.
 3. From a terminal MCP client or test harness, call `animate_bridge_status` — expect `healthy` when the panel runs.
 4. With a document open, call `animate_get_document_info` and confirm structured document metadata returns without timeout.
+5. On a layer with content at frame **1**, call **`animate_list_frame_elements`** (`frameNumber: 1`) — confirm **`elementIndex`** and **`x`/`y`/`rotationDeg`** align with **Properties** for a keyframe.
+6. Call **`animate_get_element_properties`** with the same targeting and one **`elementIndex`** from step 5 — confirm it matches that list entry.
+7. Call **`animate_export_frame_snapshot`** with an absolute **`outputPathPlatform`** — confirm the file appears and matches the Stage at that frame; confirm the timeline playhead returns where it was before the call.
 
 ## License
 

@@ -38,7 +38,7 @@ Commands are JSON files under ~/Documents/animate-mcp-bridge/:
 Public MCP arguments use 1-based scene indices and 1-based frame numbers when documented; JSFL uses 0-based frame indices internally.
 
 ## Tool families
-Diagnostics, Documents, Scenes, Layers, Frames, Library, Stage — see README for full list.
+Diagnostics, Documents, Scenes, Layers, Frames, Library, Stage — including geometry reads (\`animate_list_frame_elements\`, \`animate_get_element_properties\`) and frame snapshots (\`animate_export_frame_snapshot\`). See README for full list.
 `;
 
 function queueSnapshot(queueDir: string): {

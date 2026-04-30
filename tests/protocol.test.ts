@@ -64,6 +64,35 @@ describe("bridge protocol", () => {
     assert.equal(r.healthy, true);
   });
 
+  it("enqueueCommand accepts animate_list_frame_elements", () => {
+    const { commandFile } = enqueueCommand(
+      "animate_list_frame_elements",
+      { frameNumber: 1 },
+      { queueDir: tmpDir }
+    );
+    const raw = fs.readFileSync(commandFile, "utf8");
+    const env = JSON.parse(raw) as { command: string };
+    assert.equal(env.command, "animate_list_frame_elements");
+  });
+
+  it("enqueueCommand accepts animate_export_frame_snapshot", () => {
+    const { commandFile } = enqueueCommand(
+      "animate_export_frame_snapshot",
+      { frameNumber: 1, outputPathPlatform: "/tmp/frame.png", format: "PNG" },
+      { queueDir: tmpDir }
+    );
+    const raw = fs.readFileSync(commandFile, "utf8");
+    const env = JSON.parse(raw) as { command: string };
+    assert.equal(env.command, "animate_export_frame_snapshot");
+  });
+
+  it("enqueueCommand rejects unknown bridge commands", () => {
+    assert.throws(
+      () => enqueueCommand("animate_nonexistent_command", {}, { queueDir: tmpDir }),
+      /Invalid bridge command/
+    );
+  });
+
   it("evaluateBridgeHealth rejects millis-only lastHeartbeatISO (JSFL fallback bug)", () => {
     const r = evaluateBridgeHealth({
       protocolVersion: 1,

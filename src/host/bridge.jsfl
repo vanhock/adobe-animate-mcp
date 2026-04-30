@@ -305,6 +305,109 @@ function frameUiToIdx(n) {
   return n - 1;
 }
 
+/** Serialize Element.matrix when present (Animate JSFL). */
+function snapshotMatrix(el) {
+  try {
+    var m = el.matrix;
+    if (!m) return undefined;
+    return {
+      a: m.a,
+      b: m.b,
+      c: m.c,
+      d: m.d,
+      tx: m.tx,
+      ty: m.ty
+    };
+  } catch (em) {}
+  return undefined;
+}
+
+/** Read common geometry / identity fields defensively (SpiderMonkey ES3). */
+function snapshotElement(el, elementIndex, includeMatrix) {
+  var out = { elementIndex: elementIndex };
+  try {
+    out.elementType = el.elementType;
+  } catch (e1) {}
+  try {
+    if (el.name !== undefined && el.name !== null) out.name = String(el.name);
+  } catch (e2) {}
+  try {
+    if (typeof el.x === "number") out.x = el.x;
+  } catch (e3) {}
+  try {
+    if (typeof el.y === "number") out.y = el.y;
+  } catch (e4) {}
+  try {
+    if (typeof el.width === "number") out.width = el.width;
+  } catch (e5) {}
+  try {
+    if (typeof el.height === "number") out.height = el.height;
+  } catch (e6) {}
+  try {
+    if (typeof el.rotation === "number") out.rotationDeg = el.rotation;
+  } catch (e7) {}
+  try {
+    if (el.libraryItem && el.libraryItem.name) out.libraryItemName = String(el.libraryItem.name);
+  } catch (e8) {}
+  try {
+    if (el.symbolType !== undefined) out.symbolType = String(el.symbolType);
+  } catch (e9) {}
+  try {
+    if (el.instanceType !== undefined) out.instanceType = String(el.instanceType);
+  } catch (e10) {}
+  try {
+    if (el.colorMode !== undefined) out.colorMode = String(el.colorMode);
+  } catch (e11) {}
+  try {
+    if (typeof el.alphaMultiplier === "number") out.alphaMultiplier = el.alphaMultiplier;
+  } catch (e12) {}
+  try {
+    if (typeof el.alpha === "number") out.alpha = el.alpha;
+  } catch (e13) {}
+  if (includeMatrix) {
+    var mm = snapshotMatrix(el);
+    if (mm) out.matrix = mm;
+  }
+  return out;
+}
+
+function cmdExportFrameSnapshot(args) {
+  if (!args.outputPathPlatform) throw new Error("outputPathPlatform required.");
+  var uri = FLfile.platformPathToURI(String(args.outputPathPlatform).replace(/\\/g, "/"));
+  var dom = findDom(args);
+  var prevTimeline = dom.currentTimeline;
+  var tlPrev = dom.getTimeline();
+  var prevFrame = tlPrev.currentFrame;
+  try {
+    applyScene(dom, args);
+    var tl = dom.getTimeline();
+    var fi = frameUiToIdx(Number(args.frameNumber));
+    if (fi < 0 || fi >= tl.frameCount) {
+      throw new Error("frameNumber out of range for timeline.");
+    }
+    tl.currentFrame = fi;
+    var fmt = args.format ? String(args.format).toUpperCase() : "PNG";
+    if (fmt === "PNG") {
+      dom.exportPNG(uri);
+    } else if (fmt === "SVG") {
+      dom.exportSVG(uri, true);
+    } else {
+      throw new Error("unsupported format");
+    }
+    return {
+      ok: true,
+      format: fmt,
+      frameNumber: Number(args.frameNumber),
+      outputPathPlatform: String(args.outputPathPlatform),
+      uri: uri
+    };
+  } finally {
+    dom.currentTimeline = prevTimeline;
+    var tlRestore = dom.getTimeline();
+    tlRestore.currentFrame = prevFrame;
+  }
+}
+
 function routeCommand(cmd, args) {
   if (cmd === "animate_list_documents") return cmdListDocuments();
   if (cmd === "animate_get_document_info") return cmdGetDocInfo(args);
@@ -314,6 +417,7 @@ function routeCommand(cmd, args) {
   if (cmd === "animate_close_document") return cmdCloseDoc(args);
   if (cmd === "animate_publish_document") return cmdPublish(args);
   if (cmd === "animate_export_document") return cmdExport(args);
+  if (cmd === "animate_export_frame_snapshot") return cmdExportFrameSnapshot(args);
 
   if (cmd === "animate_list_scenes") return cmdListScenes(args);
   if (cmd === "animate_add_scene") return cmdAddScene(args);
@@ -353,6 +457,8 @@ function routeCommand(cmd, args) {
   if (cmd === "animate_set_filters") return cmdFilters(args);
   if (cmd === "animate_select_elements") return cmdSelect(args);
   if (cmd === "animate_delete_selection") return cmdDeleteSel(args);
+  if (cmd === "animate_list_frame_elements") return cmdListFrameElements(args);
+  if (cmd === "animate_get_element_properties") return cmdGetElementProperties(args);
 
   if (cmd === "animate_run_named_script") return cmdNamedScript(args);
   throw new Error("Unknown command: " + cmd);
@@ -553,6 +659,65 @@ function cmdListFrames(args) {
 function timelineLayerIndexZeroBased(tl, args) {
   var ui = args.layerIndex !== undefined && args.layerIndex !== null ? Number(args.layerIndex) : 1;
   return layerIndexFromUi(tl, ui, args.layerName);
+}
+
+/**
+ * Resolve scene + layer + frame.elements[] using same targeting as cmdElemProps.
+ * Requires args.frameNumber (1-based UI frame).
+ */
+function resolveLayerFrameElements(dom, args) {
+  var tl = applyScene(dom, args);
+  var sceneIndexUi = dom.currentTimeline + 1;
+  var li = timelineLayerIndexZeroBased(tl, args);
+  var fi = frameUiToIdx(Number(args.frameNumber));
+  var layerObj = tl.layers[li];
+  if (fi < 0 || fi >= layerObj.frames.length) {
+    throw new Error("frameNumber out of range for layer.");
+  }
+  var els = layerObj.frames[fi].elements;
+  return {
+    sceneIndexUi: sceneIndexUi,
+    layerIndexUi: li + 1,
+    layerName: layerObj.name ? String(layerObj.name) : "",
+    frameNumberUi: Number(args.frameNumber),
+    elementsArray: els || []
+  };
+}
+
+function cmdListFrameElements(args) {
+  var dom = findDom(args);
+  var ctx = resolveLayerFrameElements(dom, args);
+  var includeMatrix =
+    args.includeMatrix !== undefined && args.includeMatrix !== null ? !!args.includeMatrix : true;
+  var outList = [];
+  for (var i = 0; i < ctx.elementsArray.length; i++) {
+    outList.push(snapshotElement(ctx.elementsArray[i], i, includeMatrix));
+  }
+  return {
+    sceneIndex: ctx.sceneIndexUi,
+    layerIndex: ctx.layerIndexUi,
+    layerName: ctx.layerName,
+    frameNumber: ctx.frameNumberUi,
+    elements: outList
+  };
+}
+
+function cmdGetElementProperties(args) {
+  var dom = findDom(args);
+  var ctx = resolveLayerFrameElements(dom, args);
+  var ei =
+    args.elementIndex !== undefined && args.elementIndex !== null ? Number(args.elementIndex) : NaN;
+  if (isNaN(ei)) throw new Error("elementIndex required.");
+  ei = Math.floor(ei);
+  if (!ctx.elementsArray.length) {
+    throw new Error("No elements on target layer at frame " + ctx.frameNumberUi + ".");
+  }
+  if (ei < 0 || ei >= ctx.elementsArray.length) {
+    throw new Error("elementIndex out of range.");
+  }
+  var includeMatrix =
+    args.includeMatrix !== undefined && args.includeMatrix !== null ? !!args.includeMatrix : true;
+  return snapshotElement(ctx.elementsArray[ei], ei, includeMatrix);
 }
 
 function cmdInsertFrames(args) {

@@ -16,6 +16,7 @@ export const ANIMATE_BRIDGE_COMMAND_IDS = [
   "animate_close_document",
   "animate_publish_document",
   "animate_export_document",
+  "animate_export_frame_snapshot",
   // Scenes / timelines
   "animate_list_scenes",
   "animate_add_scene",
@@ -55,6 +56,8 @@ export const ANIMATE_BRIDGE_COMMAND_IDS = [
   "animate_set_filters",
   "animate_select_elements",
   "animate_delete_selection",
+  "animate_list_frame_elements",
+  "animate_get_element_properties",
   /** Safe named modules under host/commands/named/*.jsfl */
   "animate_run_named_script"
 ] as const;
